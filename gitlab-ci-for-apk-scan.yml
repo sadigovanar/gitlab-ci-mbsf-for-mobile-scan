@@ -1,0 +1,19 @@
+stages:
+    - mobsf
+ 
+mobsf-scan:
+    stage: mobsf
+    before_script:
+        - apt update && apt install jq -y
+    script:
+        - |
+          export hash=$(curl -F 'file=@AndroGoat.apk' http://$MOBSF_SERVER:8000/api/v1/upload -H "Authorization: $API_KEY" | jq -r '.hash')
+          curl -X POST --url http://$MOBSF_SERVER:8000/api/v1/scan --data "hash=$hash" -H "Authorization: $API_KEY" > /dev/null
+          curl -X POST --url http://$MOBSF_SERVER:8000/api/v1/download_pdf --data "hash=$hash" -H "Authorization: $API_KEY" --output mobsf_scan.pdf
+          curl -X POST --url http://$MOBSF_SERVER:8000/api/v1/report_json --data "hash=$hash" -H "Authorization: $API_KEY" --output mobsf_scan.json
+ 
+    artifacts:
+        when: always
+        paths:
+            - mobsf_scan.pdf
+            - mobsf_scan.json
